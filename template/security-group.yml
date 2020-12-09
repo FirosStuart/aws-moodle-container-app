@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: security group configure
+Parameters:
+  SystemName:
+    Type: String
+    Description: cfn-test
+  AdminIPAddress:
+    Type: String
+    Description: Admin IP
+Resources:
+  ALBAppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub ${SystemName}ALBAppSecurityGroup
+      GroupName: !Sub ${SystemName}ALBAppSecurityGroup
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          CidrIp: 0.0.0.0/0
+          Description: all
+          FromPort: 80
+          ToPort: 80
+      VpcId:
+        Fn::ImportValue:
+          !Sub ${SystemName}VPC
+  ALBAdminSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub ${SystemName}ALBAdminSecurityGroup
+      GroupName: !Sub ${SystemName}ALBAdminSecurityGroup
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          CidrIp: !Ref AdminIPAddress
+          Description: AdminIPAddress
+          FromPort: 80
+          ToPort: 80
+      VpcId:
+        Fn::ImportValue:
+          !Sub ${SystemName}VPC
+  ContainerAppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub ${SystemName}ContainerAppSecurityGroup
+      GroupName: !Sub ${SystemName}ContainerAppSecurityGroup
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          Description: !Sub ${SystemName}ALBAppSecurityGroup
+          FromPort: 80
+          SourceSecurityGroupId: !Ref ALBAppSecurityGroup
+          ToPort: 80
+      VpcId:
+        Fn::ImportValue:
+          !Sub ${SystemName}VPC
+  ContainerAdminSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub ${SystemName}ContainerAdminSecurityGroup
+      GroupName: !Sub ${SystemName}ContainerAdminSecurityGroup
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          Description: !Sub ${SystemName}ALBAdminSecurityGroup
+          FromPort: 80
+          SourceSecurityGroupId: !Ref ALBAdminSecurityGroup
+          ToPort: 80
+      VpcId:
+        Fn::ImportValue:
+          !Sub ${SystemName}VPC
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub ${SystemName}DBSecurityGroup
+      GroupName: !Sub ${SystemName}DBSecurityGroup
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          Description: !Sub ${SystemName}ContainerAppSecurityGroup
+          FromPort: 3306
+          SourceSecurityGroupId: !Ref ContainerAppSecurityGroup
+          ToPort: 3306
+        - IpProtocol: tcp
+          Description: !Sub ${SystemName}ContainerAdminSecurityGroup
+          FromPort: 3306
+          SourceSecurityGroupId: !Ref ContainerAdminSecurityGroup
+          ToPort: 3306
+      VpcId:
+        Fn::ImportValue:
+          !Sub ${SystemName}VPC
+Outputs:
+  ALBAppSecurityGroup:
+    Value: !Ref ALBAppSecurityGroup
+    Export:
+      Name: !Sub ${SystemName}ALBAppSecurityGroup
+  ALBAdminSecurityGroup:
+    Value: !Ref ALBAdminSecurityGroup
+    Export:
+      Name: !Sub ${SystemName}ALBAdminSecurityGroup
+  ContainerAppSecurityGroup:
+    Value: !Ref ContainerAppSecurityGroup
+    Export:
+      Name: !Sub ${SystemName}ContainerAppSecurityGroup
+  ContainerAdminSecurityGroup:
+    Value: !Ref ContainerAdminSecurityGroup
+    Export:
+      Name: !Sub ${SystemName}ContainerAdminSecurityGroup
+  DBSecurityGroup:
+    Value: !Ref DBSecurityGroup
+    Export:
+      Name: !Sub ${SystemName}DBSecurityGroup

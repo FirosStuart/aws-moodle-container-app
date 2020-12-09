@@ -1,0 +1,159 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: network configure
+Parameters:
+  SystemName:
+    Type: String
+    Description: cfn-test
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: default
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+  PublicSubnet1a:
+    Type: AWS::EC2::Subnet
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      AvailabilityZone: ap-northeast-1a
+      CidrBlock: 10.0.0.0/24
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPC
+  PrivateSubnet1a:
+    Type: AWS::EC2::Subnet
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      AvailabilityZone: ap-northeast-1a
+      CidrBlock: 10.0.30.0/24
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPC
+  PrivateSubnet2a:
+    Type: AWS::EC2::Subnet
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      AvailabilityZone: ap-northeast-1a
+      CidrBlock: 10.0.40.0/24
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPC
+  PrivateSubnet3a:
+    Type: AWS::EC2::Subnet
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      AvailabilityZone: ap-northeast-1a
+      CidrBlock: 10.0.50.0/24
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPC
+  PrivateSubnet4a:
+    Type: AWS::EC2::Subnet
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      AvailabilityZone: ap-northeast-1a
+      CidrBlock: 10.0.60.0/24
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPC
+  EIP1a:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+  NATGateway1a:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+        Fn::GetAtt:
+          - EIP1a
+          - AllocationId
+      SubnetId: !Ref PublicSubnet1a
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref PublicRouteTable
+  PrivateRouteTable1a:
+    Type: AWS::EC2::RouteTable
+    DependsOn: NATGateway1a
+    Properties:
+      VpcId: !Ref VPC
+  PrivateRoute1a:
+    Type: AWS::EC2::Route
+    DependsOn: NATGateway1a
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGateway1a
+      RouteTableId: !Ref PrivateRouteTable1a
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  PrivateRouteTable3:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  PrivateRouteTable4:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  PublicSubnet1aRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1a
+  PrivateSubnet1aRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1a
+      SubnetId: !Ref PrivateSubnet1a
+  PrivateSubnet2aRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      SubnetId: !Ref PrivateSubnet2a
+  PrivateSubnet3aRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable3
+      SubnetId: !Ref PrivateSubnet3a
+  PrivateSubnet4aRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable4
+      SubnetId: !Ref PrivateSubnet4a
+Outputs:
+  VPC:
+    Value: !Ref VPC
+    Export:
+      Name: !Sub ${SystemName}VPC
+  PublicSubnet1a:
+    Value: !Ref PublicSubnet1a
+    Export:
+      Name: !Sub ${SystemName}PublicSubnet1a
+  PrivateSubnet1a:
+    Value: !Ref PrivateSubnet1a
+    Export:
+      Name: !Sub ${SystemName}PrivateSubnet1a
+  PrivateSubnet2a:
+    Value: !Ref PrivateSubnet2a
+    Export:
+      Name: !Sub ${SystemName}PrivateSubnet2a
+  PrivateSubnet3a:
+    Value: !Ref PrivateSubnet3a
+    Export:
+      Name: !Sub ${SystemName}PrivateSubnet3a
+  PrivateSubnet4a:
+    Value: !Ref PrivateSubnet4a
+    Export:
+      Name: !Sub ${SystemName}PrivateSubnet4a
